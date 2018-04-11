@@ -1,8 +1,8 @@
-<!DOCTYPE html >
+
+
+<!DOCTYPE html>
+<html>
   <head>
-    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
-    <title>Using MySQL and PHP with Google Maps</title>
     <style>
       /* Always set the map height explicitly to define the size of the div
        * element that contains the map. */
@@ -17,85 +17,95 @@
       }
     </style>
   </head>
-
   <body>
     <div id="map"></div>
-
     <script>
-      var customLabel = {
-        restaurant: {
-          label: 'R'
-        },
-        bar: {
-          label: 'B'
-        }
-      };
+      var map;
 
-        function initMap() {
-        var map = new google.maps.Map(document.getElementById('map'), {
-          center: new google.maps.LatLng(-33.863276, 151.207977),
-          zoom: 12
+      function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 7,
+          center: new google.maps.LatLng(40.900,-77.194)
         });
-        var infoWindow = new google.maps.InfoWindow;
 
-          // Change this depending on the name of your PHP or XML file
-          downloadUrl('https://storage.googleapis.com/mapsdevsite/json/mapmarkers2.xml', function(data) {
-            var xml = data.responseXML;
-            var markers = xml.documentElement.getElementsByTagName('marker');
-            Array.prototype.forEach.call(markers, function(markerElem) {
-              var id = markerElem.getAttribute('id');
-              var name = markerElem.getAttribute('name');
-              var address = markerElem.getAttribute('address');
-              var type = markerElem.getAttribute('type');
-              var point = new google.maps.LatLng(
-                  parseFloat(markerElem.getAttribute('lat')),
-                  parseFloat(markerElem.getAttribute('lng')));
-
-              var infowincontent = document.createElement('div');
-              var strong = document.createElement('strong');
-              strong.textContent = name
-              infowincontent.appendChild(strong);
-              infowincontent.appendChild(document.createElement('br'));
-
-              var text = document.createElement('text');
-              text.textContent = address
-              infowincontent.appendChild(text);
-              var icon = customLabel[type] || {};
-              var marker = new google.maps.Marker({
-                map: map,
-                position: point,
-                label: icon.label
-              });
-              marker.addListener('click', function() {
-                infoWindow.setContent(infowincontent);
-                infoWindow.open(map, marker);
-              });
-            });
-          });
-        }
+        //calls data, then places markers
+        var jsondata = callData();
 
 
-
-      function downloadUrl(url, callback) {
-        var request = window.ActiveXObject ?
-            new ActiveXObject('Microsoft.XMLHTTP') :
-            new XMLHttpRequest;
-
-        request.onreadystatechange = function() {
-          if (request.readyState == 4) {
-            request.onreadystatechange = doNothing;
-            callback(request, request.status);
-          }
-        };
-
-        request.open('GET', url, true);
-        request.send(null);
+       // document.getElementsByTagName('head')[0].appendChild(script);   
       }
 
-      function doNothing() {}
+
+
+     
+    
+/*
+      window.eqfeed_callback = function(results) {
+        for (var i = 0; i < results.features.length; i++) {
+          var coords = results.features[i].geometry.coordinates;
+          var latLng = new google.maps.LatLng(coords[1],coords[0]);
+          var marker = new google.maps.Marker({
+            position: latLng,
+            map: map
+          });
+        }
+      }
+
+*/
+
+
     </script>
+
+
+     <script>
+        //calls data
+    function callData(){
+        var oReq = new XMLHttpRequest(); //New request object;
+        oReq.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                var myArr = JSON.parse(this.responseText);
+                marker(myArr);
+            };
+        }
+
+        oReq.open("get", "get-data.php", true);
+        oReq.send();  
+    }
+        
+
+       
+    // places markers
+    function marker(jsondata) {
+        for(var i = 0; i < jsondata.length; i++) {
+            var coords =jsondata[i]
+            var latLng= new google.maps.LatLng(coords.latitude, coords.longitude)
+            var marker = new google.maps.Marker({position:latLng, map: map})
+        }
+    }
+
+
+
+
+
+
+    function doNothing() {
+
+    }
+
+
+    function reqListener () {
+      console.log( this.responseText);
+    }
+
+
+    </script>
+
+
+
+
+
     <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap">
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCG3IJFse1sdzlssxc9uGB52cWWKod70ZI&callback=initMap">
     </script>
   </body>
 </html>
