@@ -1,21 +1,14 @@
 <?php
 
 //range of speeds
-if (isset($_POST['MimU'])) //checks if exists
+if (isset($_POST['Up'])) //checks if exists
 { 
-	 $MimU=(int)$_POST["MimU"];
+	 $Up=$_POST["Up"];
+
 } 
-if (isset($_POST['MamU'])) 
+if (isset($_POST['Down'])) 
 { 
-	$MamU= (int)$_POST["MamU"];
-} 
-if (isset($_POST['MimD'])) //checks if exists
-{ 
-	 $MimD=(int)$_POST["MimD"];
-} 
-if (isset($_POST['MamD'])) 
-{ 
-	$MamD= (int)$_POST["MamD"];
+	$Down=$_POST["Down"];
 } 
 
 
@@ -38,10 +31,10 @@ if (isset($_POST['Func'])) {
 		getAll();
 	}
 	elseif ($Func==1) {
-		getDownload($MimD,$MamD);
+		getDownload($Down);
 	}
 	elseif ($Func==2) {
-		getUpload($MimU,$MamU);
+		getUpload($Up);
 	}
 	elseif ($Func==3) {
 		getZip($gzip);
@@ -50,7 +43,7 @@ if (isset($_POST['Func'])) {
 		getSpecific($OBJid);
 	}
 	elseif ($Func==5){
-		getUpDown($MimU,$MamU,$MimD,$MamD);
+		getUpDown($Up,$Down);
 	}
 } 
 else{
@@ -69,7 +62,7 @@ function getAll(){
 
 
 	//query
-	$sql = "SELECT block_reffernce.latitude, block_reffernce.longitude, fcc_database.objectid
+	$sql = "SELECT block_reffernce.latitude, block_reffernce.longitude, fcc_database.objectid, fcc_database.downloadspeed
 	FROM fcc_database
 	inner JOIN block_reffernce ON fcc_database.fullfipsid = block_reffernce.fullfipsid";
 
@@ -82,7 +75,7 @@ function getAll(){
 	    	 $myArray[] = $row;
 	    }
 	} else {
-	    echo "0 results";//if none exists
+	   // echo "0 results";//if none exists
 	}
 	 echo json_encode($myArray);//send json data
 
@@ -114,14 +107,14 @@ function getZip($zip){
 	    	 $myArray[] = $row;
 	    }
 	} else {
-	    echo "0 results";
+	   // echo "0 results";
 	}
 	 echo json_encode($myArray);
 	$conn->close();
 }
 
 //get all dataponts within range of upload speeds
-function getUpload($Min,$Max){
+function getUpload($up){
 	$servername = "localhost";
 	$username = "root";
 	$password = "";
@@ -134,7 +127,7 @@ function getUpload($Min,$Max){
 	$sql = "SELECT block_reffernce.latitude, block_reffernce.longitude, fcc_database.objectid 
 	FROM fcc_database
 	RIGHT JOIN block_reffernce ON fcc_database.fullfipsid = block_reffernce.fullfipsid
-	where fcc_database.uploadspeed >= $Min and fcc_database.uploadspeed <= $Max";
+	where fcc_database.uploadspeed = $up ";
 
 
 	$result = $conn->query($sql);
@@ -145,14 +138,14 @@ function getUpload($Min,$Max){
 	    	 $myArray[] = $row;
 	    }
 	} else {
-	    echo "0 results";
+	    //echo "0 results";
 	}
 	 echo json_encode($myArray);
 	$conn->close();
 }
 
 //get all dataponts within range of download speeds
-function getDownload($Min,$Max){
+function getDownload($down){
 	$servername = "localhost";
 	$username = "root";
 	$password = "";
@@ -165,7 +158,7 @@ function getDownload($Min,$Max){
 	$sql = "SELECT block_reffernce.latitude, block_reffernce.longitude, fcc_database.objectid 
 	FROM fcc_database
 	RIGHT JOIN block_reffernce ON fcc_database.fullfipsid = block_reffernce.fullfipsid
-	where fcc_database.downloadspeed >= $Min and fcc_database.downloadspeed <= $Max";
+	where fcc_database.downloadspeed = $down ";
 
 	//creat json string
 	$result = $conn->query($sql);
@@ -176,12 +169,41 @@ function getDownload($Min,$Max){
 	    	 $myArray[] = $row;
 	    }
 	} else {
-	    echo "0 results";
+	   // echo "0 results";
 	}
 	 echo json_encode($myArray);
 	$conn->close();
 }
 
+function getUpDown($up,$down){
+	$servername = "localhost";
+	$username = "root";
+	$password = "";
+	$dbname = "fcc_data";
+	$conn = new mysqli($servername, $username, $password, $dbname);
+	if ($conn->connect_error) { die("Connection failed: " . $conn->connect_error);} 
+
+
+	//get range of locations
+	$sql = "SELECT block_reffernce.latitude, block_reffernce.longitude, fcc_database.objectid 
+	FROM fcc_database
+	RIGHT JOIN block_reffernce ON fcc_database.fullfipsid = block_reffernce.fullfipsid
+	where fcc_database.uploadspeed = $up and fcc_database.downloadspeed = $down";
+
+	//creat json string
+	$result = $conn->query($sql);
+	$myArray = array();
+	if ($result->num_rows > 0) {
+	    // output data of each row
+	    while($row = $result->fetch_assoc()) {
+	    	 $myArray[] = $row;
+	    }
+	} else {
+	   // echo "0 results";
+	}
+	 echo json_encode($myArray);
+	$conn->close();
+}
 //get info on specific datapoint
 function getSpecific($Id){
 	$servername = "localhost";
@@ -208,39 +230,10 @@ function getSpecific($Id){
 	    	echo json_encode($row);
 	    }
 	} else {
-	    echo "0 results";
+	   // echo "0 results";
 	}
 	$conn->close();
 }
 
-function getUpDown($MimU,$MamU,$MimD,$MamD){
-	$servername = "localhost";
-	$username = "root";
-	$password = "";
-	$dbname = "fcc_data";
-	$conn = new mysqli($servername, $username, $password, $dbname);
-	if ($conn->connect_error) { die("Connection failed: " . $conn->connect_error);} 
-
-
-	//get range of locations
-	$sql = "SELECT block_reffernce.latitude, block_reffernce.longitude, fcc_database.objectid 
-	FROM fcc_database
-	RIGHT JOIN block_reffernce ON fcc_database.fullfipsid = block_reffernce.fullfipsid
-	where fcc_database.downloadspeed >= $MimD and fcc_database.downloadspeed <= $MamD and fcc_database.uploadspeed >= $MimU and fcc_database.uploadspeed <= $MamU";
-
-	//creat json string
-	$result = $conn->query($sql);
-	$myArray = array();
-	if ($result->num_rows > 0) {
-	    // output data of each row
-	    while($row = $result->fetch_assoc()) {
-	    	 $myArray[] = $row;
-	    }
-	} else {
-	    echo "0 results";
-	}
-	 echo json_encode($myArray);
-	$conn->close();
-}
 
 ?>
